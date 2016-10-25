@@ -9,12 +9,14 @@ namespace led
         static string currentLine;
         static int index;
         static Stack<List<string>> undoHistory;
+        static string searchString;
 
         static void Main(string[] args)
         {
             buffer = new List<string>();
             index = 0;
             undoHistory = new Stack<List<string>>();
+            searchString = "";
             while (true)
             {
                 printLineNumber(index + 1);
@@ -23,6 +25,9 @@ namespace led
                 {
                     switch (currentLine[1])
                     {
+                        case '/':
+                            writeLine(currentLine.Substring(1));
+                            break;
                         case '!':
                             string cmd = "/c " + currentLine.Substring(2);
                             System.Diagnostics.Process proc = new System.Diagnostics.Process();
@@ -91,12 +96,44 @@ namespace led
                             }
                             break;
                         case 'q':
+                            // Exit
                             return;
-                        case 'u':
-                            if (undoHistory.Count > 0)
+                        case 'r':
+                            string replaceString = currentLine.Substring(2);
+                            for (int i = 0; i < buffer.Count; i++)
                             {
-                                buffer = undoHistory.Pop();
-                                index = buffer.Count;
+                                string replacedString = buffer[i].Replace(searchString, replaceString);
+                                if (replacedString != buffer[i])
+                                {
+                                    saveUndo();
+                                    buffer[i] = replacedString;
+                                }
+                            }
+                            break;
+                        case 's':
+                            searchString = currentLine.Substring(2);
+                            for (int i = 0; i < buffer.Count; i++)
+                            {
+                                if (buffer[i].Contains(searchString))
+                                {
+                                    printLine(i);
+                                }
+                            }
+                            break;
+                        case 'u':
+                            int steps = 0;
+                            try
+                            {
+                                steps = Convert.ToInt32(currentLine.Substring(2)) - 1;
+                            }
+                            catch (Exception)
+                            {
+                                undo();
+                                break;
+                            }
+                            for (int i = 0; i < steps; i++)
+                            {
+                                undo();
                             }
                             break;
                         default:
@@ -113,7 +150,7 @@ namespace led
 
         static void writeLine(string line)
         {
-            undoHistory.Push(new List<string>(buffer));
+            saveUndo();
             if (index == buffer.Count)
             {
                 buffer.Add(line);
@@ -131,6 +168,20 @@ namespace led
                     buffer.Add("");
                 }
                 buffer.Add(line);
+                index = buffer.Count;
+            }
+        }
+
+        static void saveUndo()
+        {
+            undoHistory.Push(new List<string>(buffer));
+        }
+
+        static void undo()
+        {
+            if (undoHistory.Count > 0)
+            {
+                buffer = undoHistory.Pop();
                 index = buffer.Count;
             }
         }
@@ -159,15 +210,17 @@ namespace led
 
         static void printHelp()
         {
-            Console.WriteLine("\t{0,-8} - {1}", "/!<command>", "Run a shell command and copies the output.");
-            Console.WriteLine("\t{0,-8} - {1}", "/c", "Clear the screen.");
-            Console.WriteLine("\t{0,-8} - {1}", "/e", "Go to the end of the file.");
-            Console.WriteLine("\t{0,-8} - {1}", "/E", "Empty the file.");
-            Console.WriteLine("\t{0,-8} - {1}", "/g<line>", "Go to the specified line of the file.");
-            Console.WriteLine("\t{0,-8} - {1}", "/h /?", "Print this help.");
-            Console.WriteLine("\t{0,-8} - {1}", "/p", "Print all the lines of the file.");
-            Console.WriteLine("\t{0,-8} - {1}", "/q", "Exit led.");
-            Console.WriteLine("\t{0,-8} - {1}", "/u", "Undo last line insertion.");
+            Console.WriteLine("\t{0,-12} - {1}", "/!<command>", "Run a shell command and copies the output.");
+            Console.WriteLine("\t{0,-12} - {1}", "/c", "Clear the screen.");
+            Console.WriteLine("\t{0,-12} - {1}", "/e", "Go to the end of the file.");
+            Console.WriteLine("\t{0,-12} - {1}", "/E", "Empty the file.");
+            Console.WriteLine("\t{0,-12} - {1}", "/g<line>", "Go to the specified line of the file.");
+            Console.WriteLine("\t{0,-12} - {1}", "/h /?", "Print this help.");
+            Console.WriteLine("\t{0,-12} - {1}", "/p", "Print all the lines of the file.");
+            Console.WriteLine("\t{0,-12} - {1}", "/q", "Exit led.");
+            Console.WriteLine("\t{0,-12} - {1}", "/r<string>", "Replace every occurence of the string found with /s.");
+            Console.WriteLine("\t{0,-12} - {1}", "/s<string>", "Print every line that contains 'string'.");
+            Console.WriteLine("\t{0,-12} - {1}", "/u[steps]", "Undo line insertions.");
         }
     }
 }

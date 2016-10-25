@@ -15,11 +15,14 @@ namespace led
             buffer = new List<string>();
             index = 0;
             undoHistory = new Stack<List<string>>();
-            while(true) {
+            while (true)
+            {
                 printLineNumber(index + 1);
                 currentLine = Console.ReadLine();
-                if (currentLine.Length > 1 && currentLine[0] == '/') {
-                    switch(currentLine[1]) {
+                if (currentLine.Length > 1 && currentLine[0] == '/')
+                {
+                    switch (currentLine[1])
+                    {
                         case '!':
                             string cmd = "/c " + currentLine.Substring(2);
                             System.Diagnostics.Process proc = new System.Diagnostics.Process();
@@ -30,7 +33,8 @@ namespace led
                             proc.StartInfo.RedirectStandardError = true;
                             proc.Start();
                             string[] lines;
-                            if (!proc.StandardOutput.EndOfStream) {
+                            if (!proc.StandardOutput.EndOfStream)
+                            {
                                 lines = proc.StandardOutput.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                                 foreach (string line in lines)
                                 {
@@ -38,7 +42,8 @@ namespace led
                                     printLine(index - 1);
                                 }
                             }
-                            if (!proc.StandardError.EndOfStream) {
+                            if (!proc.StandardError.EndOfStream)
+                            {
                                 lines = proc.StandardError.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                                 foreach (string line in lines)
                                 {
@@ -58,14 +63,20 @@ namespace led
                             buffer.Clear();
                             break;
                         case 'g':
-                            try {
+                            try
+                            {
                                 index = Convert.ToInt32(currentLine.Substring(2)) - 1;
-                            } catch (OverflowException) {
+                            }
+                            catch (OverflowException)
+                            {
                                 printError("Outside the range of the Int32 type.");
-                            } catch (FormatException) {
+                            }
+                            catch (FormatException)
+                            {
                                 printError("Invalid line number.");
                             }
-                            if (index < 0) {
+                            if (index < 0)
+                            {
                                 index = 0;
                             }
                             break;
@@ -92,7 +103,9 @@ namespace led
                             printError("Invalid command.");
                             break;
                     }
-                } else {
+                }
+                else
+                {
                     writeLine(currentLine);
                 }
             }
@@ -128,7 +141,8 @@ namespace led
             Console.WriteLine(buffer[i]);
         }
 
-        static void printLineNumber(int number) {
+        static void printLineNumber(int number)
+        {
             Console.BackgroundColor = ConsoleColor.DarkGray;
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("{0,5}", number);
@@ -136,13 +150,15 @@ namespace led
             Console.Write(" ");
         }
 
-        static void printError(string message) {
+        static void printError(string message)
+        {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(message);
             Console.ResetColor();
         }
 
-        static void printHelp() {
+        static void printHelp()
+        {
             Console.WriteLine("\t{0,-8} - {1}", "/!<command>", "Run a shell command and copies the output.");
             Console.WriteLine("\t{0,-8} - {1}", "/c", "Clear the screen.");
             Console.WriteLine("\t{0,-8} - {1}", "/e", "Go to the end of the file.");
@@ -151,6 +167,7 @@ namespace led
             Console.WriteLine("\t{0,-8} - {1}", "/h /?", "Print this help.");
             Console.WriteLine("\t{0,-8} - {1}", "/p", "Print all the lines of the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/q", "Exit led.");
+            Console.WriteLine("\t{0,-8} - {1}", "/u", "Undo last line insertion.");
         }
     }
 }

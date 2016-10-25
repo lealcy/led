@@ -8,11 +8,13 @@ namespace led
         static List<string> buffer;
         static string currentLine;
         static int index;
+        static Stack<List<string>> undoHistory;
 
         static void Main(string[] args)
         {
             buffer = new List<string>();
             index = 0;
+            undoHistory = new Stack<List<string>>();
             while(true) {
                 printLineNumber(index + 1);
                 currentLine = Console.ReadLine();
@@ -79,6 +81,13 @@ namespace led
                             break;
                         case 'q':
                             return;
+                        case 'u':
+                            if (undoHistory.Count > 0)
+                            {
+                                buffer = undoHistory.Pop();
+                                index = buffer.Count;
+                            }
+                            break;
                         default:
                             printError("Invalid command.");
                             break;
@@ -91,6 +100,7 @@ namespace led
 
         static void writeLine(string line)
         {
+            undoHistory.Push(new List<string>(buffer));
             if (index == buffer.Count)
             {
                 buffer.Add(line);

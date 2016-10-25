@@ -5,36 +5,53 @@ namespace led
 {
     class Program
     {
+        static List<string> buffer;
+        static string currentLine;
+        static int index;
+
         static void Main(string[] args)
         {
-            int lineIndex = 0;
-            var lines = new List<string>();
-            string line;
+            buffer = new List<string>();
+            index = 0;
             while(true) {
-                printLineNumber(lineIndex + 1);
-                line = Console.ReadLine();
-                if (line.Length > 1 && line[0] == '/') {
-                    switch(line[1]) {
+                printLineNumber(index + 1);
+                currentLine = Console.ReadLine();
+                if (currentLine.Length > 1 && currentLine[0] == '/') {
+                    switch(currentLine[1]) {
+                        case '!':
+                            string cmd = "/c " + currentLine.Substring(2);
+                            System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                            proc.StartInfo.FileName = "cmd.exe";
+                            proc.StartInfo.Arguments = cmd;
+                            proc.StartInfo.UseShellExecute = false;
+                            proc.StartInfo.RedirectStandardOutput = true;
+                            proc.Start();
+                            string[] lines = proc.StandardOutput.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+                            foreach (string line in lines) {
+                                writeLine(line);
+                                printLine(index - 1);
+                            }
+                            break;
                         case 'c':
                             Console.Clear();
                             break;
-                        case 'C':
-                            lineIndex = 0;
-                            lines.Clear();
+                        case 'E':
+                            index = 0;
+                            buffer.Clear();
                             break;
                         case 'e':
-                            lineIndex = lines.Count;
+                            index = buffer.Count;
                             break;
                         case 'g':
                             try {
-                                lineIndex = Convert.ToInt32(line.Substring(2)) - 1;
+                                index = Convert.ToInt32(currentLine.Substring(2)) - 1;
                             } catch (OverflowException) {
                                 printError("Outside the range of the Int32 type.");
                             } catch (FormatException) {
                                 printError("Invalid line number.");
                             }
-                            if (lineIndex < 0) {
-                                lineIndex = 0;
+                            if (index < 0) {
+                                index = 0;
                             }
                             break;
                         case 'h':
@@ -42,10 +59,9 @@ namespace led
                             printHelp();
                             break;
                         case 'p':
-                            for (int i = 0; i < lines.Count; i++)
+                            for (int i = 0; i < buffer.Count; i++)
                             {
-                                printLineNumber(i + 1);
-                                Console.WriteLine(lines[i]);
+                                printLine(i);
                             }
                             break;
                         case 'q':
@@ -55,22 +71,38 @@ namespace led
                             break;
                     }
                 } else {
-                    if (lineIndex == lines.Count) {
-                        lines.Add(line);
-                        lineIndex++;
-                    } else if (lineIndex < lines.Count) {
-                        lines[lineIndex] = line;
-                        lineIndex++;
-                    }
-                    else {
-                        for (int i = lines.Count; i < lineIndex; i++) {
-                            lines.Add("");
-                        }
-                        lines.Add(line);
-                        lineIndex = lines.Count;
-                    }
+                    writeLine(currentLine);
                 }
             }
+        }
+
+        static void writeLine(string line)
+        {
+            if (index == buffer.Count)
+            {
+                buffer.Add(line);
+                index++;
+            }
+            else if (index < buffer.Count)
+            {
+                buffer[index] = line;
+                index++;
+            }
+            else
+            {
+                for (int i = buffer.Count; i < index; i++)
+                {
+                    buffer.Add("");
+                }
+                buffer.Add(line);
+                index = buffer.Count;
+            }
+        }
+
+        static void printLine(int i)
+        {
+            printLineNumber(i + 1);
+            Console.WriteLine(buffer[i]);
         }
 
         static void printLineNumber(int number) {
@@ -88,8 +120,9 @@ namespace led
         }
 
         static void printHelp() {
+            Console.WriteLine("\t{0,-8} - {1}", "/!<command>", "Run a shell command and copies the output.");
             Console.WriteLine("\t{0,-8} - {1}", "/c", "Clear the screen.");
-            Console.WriteLine("\t{0,-8} - {1}", "/C", "Empty the file.");
+            Console.WriteLine("\t{0,-8} - {1}", "/E", "Empty the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/e", "Go to the end of the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/g<line>", "Go to the specified line of the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/h /?", "Print this help.");

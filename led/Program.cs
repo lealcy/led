@@ -25,22 +25,35 @@ namespace led
                             proc.StartInfo.Arguments = cmd;
                             proc.StartInfo.UseShellExecute = false;
                             proc.StartInfo.RedirectStandardOutput = true;
+                            proc.StartInfo.RedirectStandardError = true;
                             proc.Start();
-                            string[] lines = proc.StandardOutput.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-                            foreach (string line in lines) {
-                                writeLine(line);
-                                printLine(index - 1);
+                            string[] lines;
+                            if (!proc.StandardOutput.EndOfStream) {
+                                lines = proc.StandardOutput.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+                                foreach (string line in lines)
+                                {
+                                    writeLine(line);
+                                    printLine(index - 1);
+                                }
+                            }
+                            if (!proc.StandardError.EndOfStream) {
+                                lines = proc.StandardError.ReadToEnd().Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+                                foreach (string line in lines)
+                                {
+                                    writeLine(line);
+                                    printLine(index - 1);
+                                }
                             }
                             break;
                         case 'c':
                             Console.Clear();
                             break;
+                        case 'e':
+                            index = buffer.Count;
+                            break;
                         case 'E':
                             index = 0;
                             buffer.Clear();
-                            break;
-                        case 'e':
-                            index = buffer.Count;
                             break;
                         case 'g':
                             try {
@@ -122,8 +135,8 @@ namespace led
         static void printHelp() {
             Console.WriteLine("\t{0,-8} - {1}", "/!<command>", "Run a shell command and copies the output.");
             Console.WriteLine("\t{0,-8} - {1}", "/c", "Clear the screen.");
-            Console.WriteLine("\t{0,-8} - {1}", "/E", "Empty the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/e", "Go to the end of the file.");
+            Console.WriteLine("\t{0,-8} - {1}", "/E", "Empty the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/g<line>", "Go to the specified line of the file.");
             Console.WriteLine("\t{0,-8} - {1}", "/h /?", "Print this help.");
             Console.WriteLine("\t{0,-8} - {1}", "/p", "Print all the lines of the file.");
